@@ -30,9 +30,23 @@ For example, to set up the OpenAI provider, first create an [OpenAI API key](htt
 
 **Recommended**: See [below](#using-auth-source-for-api-keys) how to use Emacs `auth-source` to protect API keys for `llm` providers.
 
-Activate `magit-gptcommit-mode` and open a Magit status buffer, the commit message will be automatically generated when changes are staged. You can run `magit-gptcommit-generate` when visiting a Magit status buffer to generate a commit message manually.
+Activate `magit-gptcommit-mode` after magit is loaded. For Doom Emacs:
 
-Setup example using [use-package](https://github.com/jwiegley/use-package) and [straight](https://github.com/radian-software/straight.el):
+``` emacs-lisp
+(after! magit
+  (use-package! magit-gptcommit
+    :init
+    (require 'llm-openai)
+    :custom
+    (magit-gptcommit-llm-provider (make-llm-openai :key "OPENAI-KEY"))
+    :config
+    (magit-gptcommit-mode 1)
+    (magit-gptcommit-status-buffer-setup)))
+```
+
+Open a Magit status buffer, the commit message will be automatically generated when changes are staged. You can run `magit-gptcommit-generate` when visiting a Magit status buffer to generate a commit message manually.
+
+Setup example using vanilla [use-package](https://github.com/jwiegley/use-package) and [straight](https://github.com/radian-software/straight.el):
 
 ``` emacs-lisp
 (use-package magit-gptcommit
@@ -48,7 +62,7 @@ Setup example using [use-package](https://github.com/jwiegley/use-package) and [
   ;; Enable magit-gptcommit-mode to watch staged changes and generate commit message automatically in magit status buffer
   ;; This mode is optional, you can also use `magit-gptcommit-generate' to generate commit message manually
   ;; `magit-gptcommit-generate' should only execute on magit status buffer currently
-  ;; (magit-gptcommit-mode 1)
+  (magit-gptcommit-mode 1)
 
   ;; Add gptcommit transient commands to `magit-commit'
   ;; Eval (transient-remove-suffix 'magit-commit '(1 -1)) to remove gptcommit transient commands
