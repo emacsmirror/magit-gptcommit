@@ -353,20 +353,14 @@ Position is determined by CONDITION, which is defined in `magit-section-match'."
     (when (< pos (length children))
       pos)))
 
-(cl-defun magit-gptcommit--goto-target-section (&optional (condition '(tags tag branch))) ;;
-  "Return end position of section after which to insert the commit message.
-SECTION is determined by CONDITION, which is defined in `magit-section-match'."
-  (let ((children (oref magit-root-section children))
-        (target))
-    ;; iterate over all children
-    (setq target (cl-loop for child in children
-                          ;; find the first child that matches the condition
-                          if (or (null condition)
-                                 (magit-section-match condition child))
-                          return child))
-    (when target
-      (goto-char (oref target start))
-      target)))
+(cl-defun magit-gptcommit--find-target-section (&optional (condition '(tags tag branch))) ;;
+  "Return section determined by CONDITION.
+CONDITION is defined by `magit-section-match'."
+  (let ((children (oref magit-root-section children)))
+    (cl-loop for child in children
+             if (or (null condition)
+                    (magit-section-match condition child))
+             return child)))
 
 
 (cl-defun magit-gptcommit--running-p (&optional (repository (magit-repository-local-repository)))
@@ -519,7 +513,7 @@ NO-CACHE is non-nil if cache should be ignored."
 (defun magit-gptcommit-remove-section ()
   "Remove gptcommit SECTION from magit buffer if exist."
   (interactive)
-  (when-let ((section (magit-gptcommit--goto-target-section 'gptcommit))
+  (when-let ((section (magit-gptcommit--find-target-section 'gptcommit))
              (inhibit-read-only t))
     (magit-gptcommit--debug "Removing gptcommit section from buffer %s" (current-buffer))
     (with-slots (start end) section
@@ -823,7 +817,7 @@ from any worker is displayed in the section."
   (magit-gptcommit--debug "Attempting to update section with latest message")
   (condition-case err
       (when-let* ((newest-msg (magit-gptcommit--find-newest-message))
-                  (section (magit-gptcommit--goto-target-section 'gptcommit)))
+                  (section (magit-gptcommit--find-target-section 'gptcommit)))
         (with-slots (start content end) section
           (when (and (markerp content) (markerp end)
                      (> (marker-position content) 1)
@@ -885,7 +879,7 @@ Call CALLBACK with the response and INFO with partial and full responses."
       (magit-gptcommit--debug "⚠️ Request blocked - another LLM request is in progress")
       (message "Another GPT commit request is already in progress. Please wait...")
       ;; Update section with a waiting message
-      (when-let ((section (magit-gptcommit--goto-target-section 'gptcommit)))
+      (when-let ((section (magit-gptcommit--find-target-section 'gptcommit)))
         (with-slots (start) section
           (save-excursion
             (goto-char (+ 12 start))
@@ -896,7 +890,7 @@ Call CALLBACK with the response and INFO with partial and full responses."
      (in-cooldown
       (let ((remaining (- magit-gptcommit-request-cooldown time-since-last-completion)))
         (magit-gptcommit--debug "Request in cooldown period (%.2f seconds remaining)" remaining)
-        (when-let ((section (magit-gptcommit--goto-target-section 'gptcommit)))
+        (when-let ((section (magit-gptcommit--find-target-section 'gptcommit)))
           (with-slots (start) section
             (save-excursion
               (goto-char (+ 12 start))
