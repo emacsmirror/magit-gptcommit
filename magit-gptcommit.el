@@ -814,7 +814,7 @@ Ensures consistent message formatting across all insertion points."
     (let ((inhibit-read-only t))
       (save-excursion
         (goto-char pos)
-        (insert msg "\n\n")))))
+        (insert (string-trim msg) "\n\n")))))
 
 (defun magit-gptcommit--update-section-with-latest-message ()
   "Update the current gptcommit section with the newest message available.
